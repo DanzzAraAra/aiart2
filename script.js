@@ -117,17 +117,23 @@ generateBtn.onclick = async () => {
     
     try {
         const url = await callDeepImgApi(prompt, selectedStyle, selectedSize);
-        
+        resultImage.crossOrigin = "anonymous";
         resultImage.src = url;
+        
         resultImage.onload = () => {
             emptyState.classList.add('hidden');
             resultArea.classList.remove('hidden');
             setTimeout(() => resultImage.classList.add('opacity-100'), 50);
+            
             showToast("Successfully created image!", "success");
             
             loaderArea.classList.add('hidden');
             generateBtn.disabled = false;
             generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            setTimeout(() => {
+                window.downloadImage();
+            }, 500);
         };
     } catch (err) {
         showToast(err.message || "Failed to generate image.", "error");
@@ -150,12 +156,11 @@ function resetUI() {
 
 window.downloadImage = async () => {
     if (!resultImage.src) return;
-    
+
     try {
         const response = await fetch(resultImage.src);
-        if (!response.ok) throw new Error("Network error");
-        
         const blob = await response.blob();
+        
         const blobUrl = window.URL.createObjectURL(blob);
         
         const a = document.createElement('a');
@@ -167,8 +172,12 @@ window.downloadImage = async () => {
         
         document.body.removeChild(a);
         window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
+        
+        showToast("Download started!", "success");
+    } catch (e) {
+        console.error(e);
         window.open(resultImage.src, '_blank');
+        showToast("Opening image in new tab...", "error");
     }
 };
 
