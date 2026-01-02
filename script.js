@@ -148,14 +148,28 @@ function resetUI() {
     renderSizes();
 }
 
-window.downloadImage = () => {
+window.downloadImage = async () => {
     if (!resultImage.src) return;
-    const a = document.createElement('a');
-    a.href = resultImage.src;
-    a.download = `kuroneko-${selectedStyle}-${Date.now()}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    
+    try {
+        const response = await fetch(resultImage.src);
+        if (!response.ok) throw new Error("Network error");
+        
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `kuroneko-${selectedStyle}-${Date.now()}.png`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+        window.open(resultImage.src, '_blank');
+    }
 };
 
 function showToast(msg, type) {
